@@ -30,15 +30,16 @@ META_FILE = DATA / "META.json"
 USER_ID = os.environ.get("MEM0_USER_ID") or "owner"
 
 # ---- LLM（抽取事实） ----
+# 均可由插件/环境变量覆盖，默认值仅供单独运行 CLI 时使用
 LLM_PROVIDER = "deepseek"
-LLM_MODEL = "deepseek-chat"
-LLM_BASE_URL = "https://api.deepseek.com"
+LLM_MODEL = os.environ.get("MEM0_LLM_MODEL") or "deepseek-chat"
+LLM_BASE_URL = os.environ.get("MEM0_LLM_BASE_URL") or "https://api.deepseek.com"
 
 # ---- Embedding（向量化） ----
 EMBED_PROVIDER = "openai"  # 走 OpenAI 兼容协议
-EMBED_MODEL = "Qwen/Qwen3-Embedding-0.6B"
-EMBED_DIMS = 1024
-EMBED_BASE_URL = "https://api.siliconflow.cn/v1"
+EMBED_MODEL = os.environ.get("MEM0_EMBED_MODEL") or "Qwen/Qwen3-Embedding-0.6B"
+EMBED_DIMS = int(os.environ.get("MEM0_EMBED_DIMS") or 1024)
+EMBED_BASE_URL = os.environ.get("MEM0_EMBED_BASE_URL") or "https://api.siliconflow.cn/v1"
 
 COLLECTION = "mem0"
 

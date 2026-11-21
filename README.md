@@ -42,9 +42,10 @@ mem0-dsh-kit/
 │   ├── verify.py            # 部署/迁移自检
 │   ├── test_mcp.py          # MCP 握手测试
 │   └── secrets.example.json # 密钥模板
-└── bundle/                  # DSH 插件包（纯配置，无代码）
+└── bundle/                  # DSH 插件包
+    ├── index.js             # Host 插件：Config 表单 + 注册 MCP 服务
     ├── package.json
-    ├── cordis.patch.yml     # 插入一条 mcp-client 行
+    ├── cordis.patch.yml     # 只插入插件自身，服务由 index.js 注册
     ├── locale/{zh,en}.json
     ├── docs/DETAIL.md
     └── icon.svg
@@ -97,28 +98,33 @@ notepad "$HOME_DIR\secrets.json"
 
 ### 3. 装 DSH 插件
 
-先改 `bundle/cordis.patch.yml` 里的**三处路径**（`command`、`args`、`env.MEM0_HOME`），换成你自己的目录：
+插件自身有一个依赖（`schemastery`，用于渲染设置表单）。`link:` 方式安装不会自动装它，先补上：
 
-```yaml
-- insert:
-    - id: mem0-mcp
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: mem0
-        transport: stdio
-        command: 'E:\mem0\.venv\Scripts\python.exe'   # ← 改
-        args:
-          - 'E:\mem0\app\mem0_mcp.py'                 # ← 改
-        env:
-          MEM0_HOME: 'E:\mem0'                        # ← 改
-        toolCallTimeoutMs: 120000
-        startupTimeoutMs: 30000
-        failOnStartupError: false
+```powershell
+cd .\bundle
+pnpm add "@deepseek-ai/schemastery@~3.19.0"
 ```
 
 然后在 DSH 里 **Plugins → Add plugin** 选择 `bundle` 目录，或用 `dsh plugin add <目录>`。
 
-装好后工具会以 `mcp__mem0__search_memories` 等形式出现。
+装好后工具会以 `mcp__mem0__search_memories` 等形式出现，**不需要改任何 YAML**。
+
+### 4. 在设置页配置
+
+插件详情页会出现这些字段：
+
+| 字段 | 默认 | 说明 |
+|---|---|---|
+| `mem0Home` | `E:\mem0` | Mem0 根目录（含 `app/`、`data/`、`.venv/`） |
+| `userId` | `owner` | 记忆归属，检索与写入都按它隔离 |
+| `pythonPath` | 空 | 留空则用 `<mem0Home>\.venv\Scripts\python.exe` |
+| `llmModel` | `deepseek-chat` | 写入时抽取事实的模型 |
+| `embedModel` | `Qwen/Qwen3-Embedding-0.6B` | 向量模型（换了要重建索引） |
+| `embedDims` | `1024` | 向量维度，必须与 embedModel 一致 |
+| `deepseekKey` | 空 | 留空则回落到 `secrets.json` / 环境变量 |
+| `siliconflowKey` | 空 | 同上 |
+
+这些值会作为环境变量传给 `mem0_mcp.py`，所以密钥填在表单里就不用再维护 `secrets.json`。
 
 ## 工具
 

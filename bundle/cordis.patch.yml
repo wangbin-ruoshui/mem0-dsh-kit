@@ -1,14 +1,5 @@
+# 插入本插件自身；它会在 apply() 里通过 ctx.mcpManager 注册 mem0 这个 MCP 服务。
+# 所有可调项都在插件设置页，无需改这个文件。
 - insert:
-    - id: mem0-mcp
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: mem0
-        transport: stdio
-        command: 'E:\mem0\.venv\Scripts\python.exe'
-        args:
-          - 'E:\mem0\app\mem0_mcp.py'
-        env:
-          MEM0_HOME: 'E:\mem0'
-        toolCallTimeoutMs: 120000
-        startupTimeoutMs: 30000
-        failOnStartupError: false
+    - id: mem0-memory
+      name: '@local/mem0-memory'
