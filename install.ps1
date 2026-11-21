@@ -8,7 +8,8 @@
     不安装 DSH 插件本身；装完脚本后到 DSH 的插件页添加 bundle 目录即可。
 
 .PARAMETER Home
-    Mem0 部署根目录。默认 E:\mem0。
+    部署根目录。默认 E:\mem0；选定后会写入用户环境变量 MEM0_HOME，
+    插件和后端都从它读取，因此不需要在插件配置里再填一次。
 
 .PARAMETER SkipVerify
     跳过最后一步自检（自检会调用一次 embedding API）。
@@ -60,6 +61,13 @@ foreach ($d in @('app', 'data', 'export', 'snapshots')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $Home $d) | Out-Null
 }
 Write-Ok "$Home\{app,data,export,snapshots}"
+
+# 路径只在一个地方定：写进用户环境变量，插件与后端都从这里取。
+Write-Step "记录部署路径到 MEM0_HOME"
+[Environment]::SetEnvironmentVariable('MEM0_HOME', $Home, 'User')
+$env:MEM0_HOME = $Home
+Write-Ok "MEM0_HOME = $Home"
+Write-Host "    （插件配置页的 Mem0 目录留空即可；重启 DSH 后才对新进程生效）" -ForegroundColor DarkGray
 
 # ---------------------------------------------------------------- 3. venv
 Write-Step "准备虚拟环境"

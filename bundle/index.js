@@ -14,6 +14,13 @@ import z from '@deepseek-ai/schemastery'
 /** Cordis 插件名（用于诊断）。 */
 export const name = 'mem0-memory'
 
+/**
+ * 部署根目录的兜底默认值。
+ * 优先级：插件配置页的 mem0Home > MEM0_HOME 环境变量 > 这个常量。
+ * install.ps1 会写 MEM0_HOME，所以正常安装后不需要手填。
+ */
+const DEFAULT_HOME = process.env.MEM0_HOME || 'E:\\mem0'
+
 /** 需要 mcp-manager 来托管我们注册的服务。 */
 export const inject = ['mcpManager']
 
@@ -32,8 +39,8 @@ function secretField(description) {
 export const Config = z.object({
   mem0Home: z
     .string()
-    .description('Mem0 部署根目录（含 app/、data/、.venv/）')
-    .default('E:\\mem0')
+    .description('Mem0 部署根目录（留空则用 MEM0_HOME 环境变量）')
+    .default('')
     .volatile(),
   userId: z
     .string()
@@ -85,7 +92,7 @@ function compactEnv(entries) {
 }
 
 export function apply(ctx, config) {
-  const home = String(val(config.mem0Home, 'E:\\mem0')).replace(/[\\/]+$/, '')
+  const home = String(val(config.mem0Home, DEFAULT_HOME)).replace(/[\\/]+$/, '')
   const python = String(val(config.pythonPath, '') || `${home}\\.venv\\Scripts\\python.exe`)
 
   ctx.mcpManager.register('mem0', {

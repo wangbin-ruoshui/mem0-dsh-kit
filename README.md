@@ -142,7 +142,7 @@ pnpm add "@deepseek-ai/schemastery@~3.19.0"
 
 | 字段 | 默认 | 说明 |
 |---|---|---|
-| `mem0Home` | `E:\mem0` | Mem0 根目录（含 `app/`、`data/`、`.venv/`） |
+| `mem0Home` | 空 | 留空则用 `MEM0_HOME` 环境变量（安装脚本会写），再兜底 `E:\mem0` |
 | `userId` | `owner` | 记忆归属，检索与写入都按它隔离 |
 | `pythonPath` | 空 | 留空则用 `<mem0Home>\.venv\Scripts\python.exe` |
 | `llmModel` | `deepseek-chat` | 写入时抽取事实的模型 |
@@ -152,6 +152,9 @@ pnpm add "@deepseek-ai/schemastery@~3.19.0"
 | `siliconflowKey` | 空 | 同上 |
 
 这些值会作为环境变量传给 `mem0_mcp.py`，所以密钥填在表单里就不用再维护 `secrets.json`。
+
+**配置优先级**：插件配置页 > `MEM0_HOME` 环境变量 > 内置默认值。
+`install.ps1` 只写环境变量，所以换目录、换机器都只需要改一处。
 
 ## 工具
 

@@ -12,7 +12,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement
 
     const FIELDS = [
-      { key: 'mem0Home', label: 'Mem0 目录', hint: '含 app/、data/、.venv/ 的根目录', placeholder: 'E:\\mem0' },
+      { key: 'mem0Home', label: 'Mem0 目录', hint: '留空则用安装脚本写入的 MEM0_HOME 环境变量', placeholder: '' },
       { key: 'userId', label: 'userId', hint: '记忆归属实体，按它隔离', placeholder: 'owner' },
       { key: 'pythonPath', label: 'Python 路径', hint: '留空则用 <目录>\\.venv\\Scripts\\python.exe', placeholder: '' },
       { key: 'llmModel', label: '聊天模型', hint: '写入时抽取事实', placeholder: 'deepseek-chat' },
