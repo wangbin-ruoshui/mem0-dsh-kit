@@ -204,6 +204,7 @@ E:\mem0\.venv\Scripts\python.exe E:\mem0\app\verify.py
 
 ## 已知限制
 
+- **改完配置需重载插件**：保存配置后，把插件开关关一次再打开（或重启 DSH），新的路径/密钥才会传给 MCP 子进程。
 - **单进程独占**：Qdrant 嵌入式有文件锁，同一时刻只能有一个进程打开 `data\qdrant`。多个客户端同时用会报 `Storage folder ... already accessed`。要么串行使用，要么改 Qdrant server / pgvector。
 - **无自动记忆**：这是工具而不是钩子，模型不调用就什么都不发生。
 - **关键词检索默认关闭**：未安装 `mem0ai[nlp]` 时只有语义通道，中文 BM25 收益本来也有限。

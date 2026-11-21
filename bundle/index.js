@@ -92,23 +92,31 @@ function compactEnv(entries) {
 }
 
 export function apply(ctx, config) {
-  const home = String(val(config.mem0Home, DEFAULT_HOME)).replace(/[\\/]+$/, '')
-  const python = String(val(config.pythonPath, '') || `${home}\\.venv\\Scripts\\python.exe`)
+  // 放在 ctx.effect 里：读取 volatile 值时会被追踪，配置一改就重新注册，
+  // 从而用新值重启 MCP 子进程（否则只有重启插件才生效）。
+  ctx.effect(() => {
+    const home = String(val(config.mem0Home, DEFAULT_HOME)).replace(/[\\/]+$/, '')
+    const python = String(val(config.pythonPath, '') || `${home}\\.venv\\Scripts\\python.exe`)
 
-  ctx.mcpManager.register('mem0', {
-    transport: 'stdio',
-    command: python,
-    args: [`${home}\\app\\mem0_mcp.py`],
-    env: compactEnv({
-      MEM0_HOME: home,
-      MEM0_USER_ID: val(config.userId, ''),
-      MEM0_LLM_MODEL: val(config.llmModel, ''),
-      MEM0_EMBED_MODEL: val(config.embedModel, ''),
-      MEM0_EMBED_DIMS: val(config.embedDims, ''),
-      DEEPSEEK_API_KEY: val(config.deepseekKey, ''),
-      SILICONFLOW_API_KEY: val(config.siliconflowKey, ''),
-    }),
-    toolCallTimeoutMs: 120_000,
-    startupTimeoutMs: 30_000,
-  })
+    const dispose = ctx.mcpManager.register('mem0', {
+      transport: 'stdio',
+      command: python,
+      args: [`${home}\\app\\mem0_mcp.py`],
+      env: compactEnv({
+        MEM0_HOME: home,
+        MEM0_USER_ID: val(config.userId, ''),
+        MEM0_LLM_MODEL: val(config.llmModel, ''),
+        MEM0_EMBED_MODEL: val(config.embedModel, ''),
+        MEM0_EMBED_DIMS: val(config.embedDims, ''),
+        DEEPSEEK_API_KEY: val(config.deepseekKey, ''),
+        SILICONFLOW_API_KEY: val(config.siliconflowKey, ''),
+      }),
+      toolCallTimeoutMs: 120_000,
+      startupTimeoutMs: 30_000,
+    })
+
+    return () => {
+      if (typeof dispose === 'function') dispose()
+    }
+  }, 'mem0: mcp registration follows volatile config')
 }
