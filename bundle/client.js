@@ -145,6 +145,64 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /**
+     * 设置页左栏入口用的包装组件。
+     *
+     * settings.section 不提供 form props，所以这里自己从 ctx.configForms 取
+     * 同一份配置（与插件页的入口写的是同一个条目）。
+     * 取不到时只影响这个页面，不影响插件本体。
+     */
+    function makeSection(configForms) {
+      return function Mem0Section() {
+        const [snapshot, setSnapshot] = React.useState(null)
+        const [handle, setHandle] = React.useState(null)
+        const [err, setErr] = React.useState('')
+
+        React.useEffect(() => {
+          let alive = true
+
+          function settle(h) {
+            if (!alive) return
+            if (!h) {
+              setErr('没有找到 mem0-memory 配置条目（插件可能未启用）')
+              return
+            }
+            setHandle(h)
+            if (typeof h.getSnapshot === 'function') setSnapshot(h.getSnapshot())
+            else setSnapshot(h)
+          }
+
+          try {
+            if (!configForms || typeof configForms.get !== 'function') {
+              setErr('当前页面没有可用的配置服务')
+              return undefined
+            }
+            const got = configForms.get('mem0-memory')
+            if (got && typeof got.then === 'function') {
+              got.then(settle).catch((e) => setErr(String((e && e.message) || e)))
+            } else {
+              settle(got)
+            }
+          } catch (e) {
+            setErr(String((e && e.message) || e))
+          }
+
+          return () => {
+            alive = false
+          }
+        }, [])
+
+        if (err) return h('div', { style: styles.error }, err)
+        if (!snapshot || !handle) return h('div', { style: styles.hint }, '加载中…')
+
+        const form = {
+          state: { value: snapshot.value || {}, revision: snapshot.revision },
+          mutate: typeof handle.mutate === 'function' ? handle.mutate.bind(handle) : undefined,
+        }
+        return h(Mem0Config, { form, view: 'page' })
+      }
+    }
+
     return {
       inject: ['slots'],
       apply(ctx) {
@@ -157,6 +215,23 @@ window.__ModuleLoader__.load({
             Mem0Config,
           ),
         )
+
+        // 设置页左栏入口，与插件页那一行共用同一份配置
+        try {
+          ctx.slots.inject('settings.section', () =>
+            ctx.slots.register(
+              {
+                name: 'settings.section',
+                id: 'mem0-memory',
+                label: 'Mem0 记忆',
+                order: 60,
+              },
+              makeSection(ctx.configForms),
+            ),
+          )
+        } catch (e) {
+          console.warn('[mem0] settings.section 注册失败：', e)
+        }
       },
     }
   },
