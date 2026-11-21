@@ -18,19 +18,29 @@
 
 **验收标准**：改 `userId` 保存后，直接调用 `list_memories` 就能看到新 scope 的结果，无需任何手动重载。
 
-### 2. `install.ps1` 在干净环境实测
+### 2. `mem0_setup` 补上安装动作
+
+现在只有 `action="check"`（只读）。下一步加：
+
+- `action="venv"` —— spawn `python -m venv <home>/.venv`
+- `action="deps"` —— spawn `pip install mem0ai mcp`（1–3 分钟，需注意工具超时，可能要分步）
+- `action="verify"` —— spawn `<venv>/python app/verify.py`
+
+注意点：pip 可能因网络失败，要把 stderr 原样返回；安装动作要幂等（已存在就跳过）；需要 `python` 的探测逻辑（`py -3` 与 `python` 两种）。
+
+### 3. `install.ps1` 在干净环境实测
 
 脚本写好了但没在全新机器上跑过。要验证：Python 探测（`py -3` / `python` 两种）、pip 失败时的镜像提示、`MEM0_HOME` 写入、pnpm 缺省时的降级提示。
 
-### 3. BM25 关键词检索
+### 4. BM25 关键词检索
 
 安装 `mem0ai[nlp]` 后开启混合检索。中文场景收益待实测（Mem0 的词形还原偏英文）；若收益不明显就不做。
 
-### 4. 手机端接入
+### 5. 手机端接入
 
 Claude 手机版支持自定义远程 MCP，但**从 Anthropic 云端发起连接**，要求公网 HTTPS + 443 + 证书。需要隧道（Cloudflare Tunnel / Tailscale Funnel），并把暴露面限制为只读 `search`。
 
-### 5. 两个 API Key 轮换
+### 6. 两个 API Key 轮换
 
 Issue：两个 key 曾以明文出现在对话里。若要轮换，正确做法是**自己改 `secrets.json`，不要把新 key 发进对话**——否则新 key 又进入同一份日志，等于没换。
 
@@ -44,4 +54,5 @@ Issue：两个 key 曾以明文出现在对话里。若要轮换，正确做法�
 - [x] `MEM0_HOME` 作为部署路径的唯一来源
 - [x] Codex 接入（`~/.codex/config.toml`）
 - [x] 一键安装脚本 `install.ps1`
+- [x] 原生工具 `mem0_setup`（只读自检）+ 环境未就绪时不注册 MCP 的门槛
 - [x] README 解释「为什么需要两个 Key」

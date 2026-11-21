@@ -166,6 +166,9 @@ pnpm add "@deepseek-ai/schemastery@~3.19.0"
 | `update_memory(memory_id, text)` | 原地改写（纠正过时事实） |
 | `delete_memory(memory_id)` | 删除单条 |
 | `export_memories()` | 导出 `memories.jsonl` |
+| `mem0_setup(action="check")` | 原生工具（纯 Node）：自检环境，环境没装好时也能用 |
+
+插件启动时会检查虚拟环境与服务脚本：**缺任一项就不注册 MCP 服务**，只保留 `mem0_setup` 用来诊断——避免出现一堆调用即失败的假工具。
 
 ## 接入其他客户端
 

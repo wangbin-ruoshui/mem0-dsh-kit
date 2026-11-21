@@ -12,8 +12,18 @@
 | `update_memory(memory_id, text)` | 原地改写，用于纠正过时事实 |
 | `delete_memory(memory_id)` | 删除单条 |
 | `export_memories()` | 导出 `memories.jsonl`（迁移用的文本真源） |
+| `mem0_setup(action="check")` | **原生工具**（纯 Node，不依赖 Python）：检查目录、虚拟环境、服务脚本、密钥 |
 
-模型侧显示为 `mcp__mem0__search_memories` 等。
+模型侧显示为 `mcp__mem0__search_memories` 等；`mem0_setup` 是 Host 原生工具，不带 `mcp__` 前缀。
+
+## 环境门槛
+
+插件启动时检查 `.venv\Scripts\python.exe` 与 `app\mem0_mcp.py`：
+
+- **都存在** → 注册 MCP 服务，工具可用
+- **缺任一** → **不注册** MCP 服务（工具列表里没有 mem0），但 `mem0_setup` 仍然可用，可以诊断缺什么
+
+这样"环境没装好"时不会出现一堆调用失败的假工具，而是明确告诉用户去补哪一步。
 
 ## 配置
 
