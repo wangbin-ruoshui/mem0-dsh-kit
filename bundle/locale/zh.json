@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Mem0 长期记忆",
-    "description": "把本地 Mem0 记忆库接成三个 MCP 工具：search_memories、add_memory、list_memories。",
+    "description": "把本地 Mem0 记忆库接成 6 个 MCP 工具（检索、写入、改写、删除、导出），并带配置页。",
     "detail": "docs/DETAIL.md"
   }
 }

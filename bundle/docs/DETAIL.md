@@ -1,54 +1,59 @@
 # Mem0 长期记忆
 
-把本机的 Mem0 记忆库接成三个原生 MCP 工具，让 Agent 在跨会话时能记住用户。
+把本机的 Mem0 记忆库接成 MCP 工具，让 Agent 跨会话记住用户。
 
-## 提供的能力
+## 提供的工具
 
 | 工具 | 作用 |
 |---|---|
-| `search_memories(query, limit)` | 按语义检索记忆，回答"我是谁 / 我偏好什么 / 上次决定了什么"之前调用 |
-| `add_memory(text)` | 把一条长期有效的事实写回记忆库 |
-| `list_memories(limit)` | 列出最近若干条记忆 |
+| `search_memories(query, limit)` | 语义检索记忆 |
+| `add_memory(text)` | 写入一条长期事实（触发 LLM 抽取） |
+| `list_memories(limit)` | 列出最近的记忆 |
+| `update_memory(memory_id, text)` | 原地改写，用于纠正过时事实 |
+| `delete_memory(memory_id)` | 删除单条 |
+| `export_memories()` | 导出 `memories.jsonl`（迁移用的文本真源） |
 
-工具在模型侧显示为 `mcp__mem0__search_memories` 等，与其他 MCP 服务并存。
+模型侧显示为 `mcp__mem0__search_memories` 等。
+
+## 配置
+
+本插件带一个配置页，**在插件页打开本插件即可编辑**，共 8 个字段：
+
+| 字段 | 默认 | 说明 |
+|---|---|---|
+| Mem0 目录 | 空 | 留空则用 `MEM0_HOME` 环境变量 |
+| userId | `owner` | 记忆归属，检索与写入都按它隔离 |
+| Python 路径 | 空 | 留空则用 `<目录>\.venv\Scripts\python.exe` |
+| 聊天模型 | `deepseek-chat` | 写入时抽取事实 |
+| 向量模型 | `Qwen/Qwen3-Embedding-0.6B` | 换模型后必须重建索引 |
+| 向量维度 | `1024` | 必须与向量模型一致 |
+| DeepSeek Key | 空 | 留空则回落到 `secrets.json` / 环境变量 |
+| Embedding Key | 空 | 同上 |
+
+**路径优先级**：配置页 > `MEM0_HOME` 环境变量 > 内置默认值。
 
 ## 后端要求
 
-这个插件只是连接器，真正的实现在 `E:\mem0`：
+本插件只是连接器，真正的实现位于部署目录：
 
 ```
-E:\mem0\
-├── .venv\                        Python 环境（mem0ai + mcp）
-├── app\mem0_mcp.py               MCP 服务（本插件启动的就是它）
-├── data\                         记忆本体：qdrant\ + history.db + META.json
-├── export\memories.jsonl         文本真源
-└── secrets.json                  API 密钥（不入库、不同步）
+<Mem0 目录>\
+├── .venv\                  Python 环境（mem0ai + mcp）
+├── app\mem0_mcp.py         MCP 服务（本插件启动的就是它）
+├── data\                   Qdrant 索引 + history.db + META.json
+├── export\memories.jsonl   文本真源
+└── secrets.json            API 密钥（可被配置页覆盖）
 ```
 
-依赖的外部服务：
-
-- DeepSeek `deepseek-chat`：写入时抽取事实
-- 硅基流动 `Qwen/Qwen3-Embedding-0.6B`：计算 1024 维向量
-
-## 使用
-
-正常对话即可。想让记忆生效，可以显式说：
-
-- "记住：我偏好 TypeScript"
-- "我之前说过用什么语言？"
+外部服务：DeepSeek（抽取）+ 一个 Embedding 服务（向量化，DeepSeek 不提供此接口）。
 
 ## 限制
 
-- **单进程独占**：Qdrant 嵌入式有文件锁，同一时刻只允许一个进程打开 `data\qdrant`。若同时又跑脚本又跑 DSH，会报锁冲突。
-- **需要本地 Python**：`E:\mem0\.venv` 不存在或依赖缺失时，工具会调用失败（插件本身不会阻止 DSH 启动）。
-- **路径写死在插件配置里**：换机器要改 `cordis.patch.yml` 里的 `command`、`args`、`env.MEM0_HOME`。
-- **只做语义检索**：未安装 `mem0ai[nlp]` 时不启用 BM25 关键词通道。
-- **写入会消耗 API 额度**：每次 `add_memory` 调用一次 DeepSeek 抽取。
+- **单进程独占**：Qdrant 嵌入式有文件锁，同一时刻只允许一个进程打开 `data\qdrant`。多个客户端同时用会报 `Storage folder ... already accessed`。
+- **没有自动记忆**：这是工具而非钩子，模型不调用就不会发生。
+- **只做语义检索**：未安装 `mem0ai[nlp]` 时 BM25 关键词通道关闭。
+- **写入消耗额度**：每次 `add_memory` 调用一次 DeepSeek 抽取。
 
 ## 迁移
 
-拷贝 `E:\mem0`（排除 `.venv`）到新机器，重建虚拟环境，把本插件目录也拷过去重新安装，然后运行：
-
-```
-E:\mem0\.venv\Scripts\python.exe E:\mem0\app\verify.py
-```
+拷贝整个部署目录（可排除 `.venv` 与 `data\qdrant`）到新机器，重建虚拟环境并安装依赖，然后在配置页把「Mem0 目录」指向新路径，或设置 `MEM0_HOME`。
