@@ -18,15 +18,19 @@
 
 **验收标准**：改 `userId` 保存后，直接调用 `list_memories` 就能看到新 scope 的结果，无需任何手动重载。
 
-### 2. `mem0_setup` 补上安装动作
+### 2. 让插件自己执行安装（当前由调用方代跑）
 
-现在只有 `action="check"`（只读）。下一步加：
+**现状**：`mem0_setup` 的 `venv` / `deps` / `verify` 会生成 `.ps1` 并返回执行命令，由调用方用自己的 shell 跑，跑完再用 `check` 看日志尾部。
 
-- `action="venv"` —— spawn `python -m venv <home>/.venv`
-- `action="deps"` —— spawn `pip install mem0ai mcp`（1–3 分钟，需注意工具超时，可能要分步）
-- `action="verify"` —— spawn `<venv>/python app/verify.py`
+**为什么没在插件里直接跑**：在 Electron Host 里 `spawn` 出来的 PowerShell 不执行脚本——相同脚本从普通 shell 运行完全正常（exit 0、日志完整）。已尝试并失败：
 
-注意点：pip 可能因网络失败，要把 stderr 原样返回；安装动作要幂等（已存在就跳过）；需要 `python` 的探测逻辑（`py -3` 与 `python` 两种）。
+1. `detached: true` + fd 重定向
+2. 非 detached + fd 重定向
+3. `-Command` 加 `*>>` 自重定向（静默 exit 1，实为引号转义问题）
+4. `-File` 直接执行（脚本生成正确，但仍无输出）
+5. `cmd /c start /b powershell -File`
+
+**下一步**：改用 DSH 自带的 `ctx.jobs` 后台任务服务（agent 的 `run_in_background` 走的就是它，已知可用），而不是自己 `spawn`。
 
 ### 3. `install.ps1` 在干净环境实测
 
@@ -54,5 +58,6 @@ Issue：两个 key 曾以明文出现在对话里。若要轮换，正确做法�
 - [x] `MEM0_HOME` 作为部署路径的唯一来源
 - [x] Codex 接入（`~/.codex/config.toml`）
 - [x] 一键安装脚本 `install.ps1`
-- [x] 原生工具 `mem0_setup`（只读自检）+ 环境未就绪时不注册 MCP 的门槛
+- [x] 原生工具 `mem0_setup`：只读自检 + venv/deps/verify 生成可执行脚本
+- [x] 环境未就绪时不注册 MCP 的门槛
 - [x] README 解释「为什么需要两个 Key」

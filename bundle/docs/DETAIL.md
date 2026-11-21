@@ -13,6 +13,9 @@
 | `delete_memory(memory_id)` | 删除单条 |
 | `export_memories()` | 导出 `memories.jsonl`（迁移用的文本真源） |
 | `mem0_setup(action="check")` | **原生工具**（纯 Node，不依赖 Python）：检查目录、虚拟环境、服务脚本、密钥 |
+| `mem0_setup(action="venv" / "deps" / "verify")` | 生成对应的 PowerShell 脚本并返回执行命令 |
+
+`mem0_setup` 的安装动作**不直接执行**：它会写好 `.ps1` 并把命令返回给调用方，由调用方用 shell 运行，之后 `check` 会显示 `setup.log` 尾部。这样安装过程可见、可中断。
 
 模型侧显示为 `mcp__mem0__search_memories` 等；`mem0_setup` 是 Host 原生工具，不带 `mcp__` 前缀。
 
