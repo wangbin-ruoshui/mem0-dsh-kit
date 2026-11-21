@@ -216,6 +216,10 @@ E:\mem0\.venv\Scripts\python.exe E:\mem0\app\verify.py
 - `mem0_service.py` 默认只绑 `127.0.0.1`，且 `/add` 需显式开 `MEM0_HTTP_ALLOW_WRITE=1`
 - 记忆内容会发给 DeepSeek（抽取）和 embedding 服务（向量化），敏感信息自行判断
 
+## 路线图
+
+未完成项、已知问题与已验证的尝试记录在 [TODO.md](./TODO.md)。
+
 ## License
 
 MIT
