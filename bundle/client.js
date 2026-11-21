@@ -148,11 +148,11 @@ window.__ModuleLoader__.load({
     /**
      * 设置页左栏入口用的包装组件。
      *
-     * settings.section 不提供 form props，所以这里自己从 ctx.configForms 取
-     * 同一份配置（与插件页的入口写的是同一个条目）。
-     * 取不到时只影响这个页面，不影响插件本体。
+     * settings.section 不提供 form props，所以这里自己取同一份配置。
+     * 取配置服务用惰性访问：Cordis 中未注入的服务属性在 apply 阶段访问会抛错，
+     * 放在组件渲染期取可以把失败限制在这个页面内部。
      */
-    function makeSection(configForms) {
+    function makeSection(getConfigForms) {
       return function Mem0Section() {
         const [snapshot, setSnapshot] = React.useState(null)
         const [handle, setHandle] = React.useState(null)
@@ -173,6 +173,7 @@ window.__ModuleLoader__.load({
           }
 
           try {
+            const configForms = getConfigForms()
             if (!configForms || typeof configForms.get !== 'function') {
               setErr('当前页面没有可用的配置服务')
               return undefined
@@ -204,7 +205,8 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots'],
+      // configForms 由 ui-settings 提供；必须显式注入才能读取配置快照
+      inject: ['slots', 'configForms'],
       apply(ctx) {
         ctx.slots.inject('plugins.row.config', () =>
           ctx.slots.register(
@@ -216,7 +218,16 @@ window.__ModuleLoader__.load({
           ),
         )
 
-        // 设置页左栏入口，与插件页那一行共用同一份配置
+        // 设置页左栏入口，与插件页那一行共用同一份配置。
+        // 服务访问放在闭包里惰性求值，apply 阶段绝不触碰可能抛错的属性。
+        const getConfigForms = () => {
+          try {
+            return ctx.configForms
+          } catch (e) {
+            return null
+          }
+        }
+
         try {
           ctx.slots.inject('settings.section', () =>
             ctx.slots.register(
@@ -226,7 +237,7 @@ window.__ModuleLoader__.load({
                 label: 'Mem0 记忆',
                 order: 60,
               },
-              makeSection(ctx.configForms),
+              makeSection(getConfigForms),
             ),
           )
         } catch (e) {
