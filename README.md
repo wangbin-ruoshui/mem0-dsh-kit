@@ -34,6 +34,7 @@ DSH / Codex / Claude Code
 
 ```
 mem0-dsh-kit/
+├── install.ps1              # 一键部署脚本
 ├── app/                     # 后端与 MCP 服务
 │   ├── config.py            # 唯一配置入口（模型、路径、userId、指令前缀）
 │   ├── mem0_mcp.py          # MCP stdio 服务，6 个工具
@@ -55,14 +56,40 @@ mem0-dsh-kit/
 
 ### 0. 前置条件
 
-- Windows（路径按 Windows 写；脚本本身跨平台，改路径即可）
+- Windows（脚本按 Windows 写；改路径可用于其他平台）
 - Python 3.10+
-- 一个 DeepSeek API key（用于写入时抽取事实）
-- 一个 embedding 服务 key（默认硅基流动，用 `Qwen/Qwen3-Embedding-0.6B`）
+- 两个 API Key —— 原因见下一节
 
-> DeepSeek 的 API **没有** `/embeddings` 端点，所以 embedding 必须另找一家。这是本方案唯一的"双供应商"要求。
+### 为什么需要两个 Key
+
+记忆系统要做两件不同的事，而 DeepSeek 只提供其中一件：
+
+| 环节 | 干什么 | 需要的模型 | DeepSeek 提供吗 |
+|---|---|---|---|
+| 写入 `add` | 把对话压成一句事实，判断"什么值得记" | **聊天模型** | ✅ `deepseek-chat` |
+| 检索 `search` | 把文字变成向量，算"意思有多像" | **Embedding 模型** | ❌ 没有这个接口 |
+
+DeepSeek 的 API 只卖"会说话"的模型（`/chat/completions`），不提供 `/embeddings` 端点。
+而向量检索必须有 embedding，且**聊天模型替代不了**：让聊天模型吐一串数字很容易，
+但那串数字不具备"距离 = 语义相似"的性质，拿它做检索等于随机排序。
+
+所以第二个 Key 不是"为了兼容"，是**缺了就搜不出东西**。
+
+推荐组合：
+
+- 聊天：DeepSeek `deepseek-chat`
+- 向量：硅基流动 `Qwen/Qwen3-Embedding-0.6B`（1024 维，有免费额度）
+
+换别的 embedding 供应商也可以（OpenAI、阿里百炼等），改配置里的 `embedModel` 与 base URL 即可。
 
 ### 1. 部署后端
+
+**一键**（推荐）：在仓库根目录运行 `.\install.ps1`，它把下面所有手动步骤一次做完
+（检查 Python → 建 venv → 装依赖 → 建目录 → 复制代码与插件 → 提示输入两个 Key → 自检）。
+
+自定义目录：`.\install.ps1 -Home 'D:\mem0'`；跳过自检：`-SkipVerify`。
+
+**手动**：
 
 ```powershell
 # 选一个不会被随手清掉的目录
