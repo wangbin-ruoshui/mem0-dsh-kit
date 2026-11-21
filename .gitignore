@@ -1,0 +1,22 @@
+# 虚拟环境
+.venv/
+venv/
+
+# 密钥
+secrets.json
+
+# 运行时数据
+data/
+export/*.jsonl
+snapshots/*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

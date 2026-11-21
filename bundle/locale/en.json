@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Mem0 memory",
+    "description": "Connects the local Mem0 memory store as three MCP tools: search_memories, add_memory, list_memories.",
+    "detail": "docs/DETAIL.md"
+  }
+}

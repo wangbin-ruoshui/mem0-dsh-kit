@@ -1,0 +1,14 @@
+- insert:
+    - id: mem0-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: mem0
+        transport: stdio
+        command: 'E:\mem0\.venv\Scripts\python.exe'
+        args:
+          - 'E:\mem0\app\mem0_mcp.py'
+        env:
+          MEM0_HOME: 'E:\mem0'
+        toolCallTimeoutMs: 120000
+        startupTimeoutMs: 30000
+        failOnStartupError: false

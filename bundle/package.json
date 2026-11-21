@@ -1,0 +1,13 @@
+{
+  "name": "@local/mem0-memory",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mem0 长期记忆库的 DSH 接入（MCP stdio）",
+  "exports": {
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": ["cordis.patch.yml", "locale/*.json", "docs", "icon.svg"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+}
