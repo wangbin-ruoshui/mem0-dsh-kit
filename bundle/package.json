@@ -1,17 +1,25 @@
 {
   "name": "@local/mem0-memory",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
-  "description": "Mem0 长期记忆库的 DSH 插件：路径与密钥可在设置页配置",
+  "description": "Mem0 长期记忆库的 DSH 插件：带配置页，可改目录、模型与密钥",
   "exports": {
     ".": "./index.js",
+    "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
-  "files": ["index.js", "cordis.patch.yml", "locale/*.json", "docs", "icon.svg"],
+  "files": ["index.js", "client.js", "cordis.patch.yml", "locale/*.json", "docs", "icon.svg"],
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.19.0"
   },
-  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": ["@deepseek-ai/dsh-client-ui-plugin-manager"]
+    }
+  }
 }
